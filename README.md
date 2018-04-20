@@ -22,3 +22,5 @@ mPtrFrameLayout.setLoadMoreHandler(new LoadMoreHandler() {
     }
 });
 ````
+
+下拉刷新 自动取消 加载更多
