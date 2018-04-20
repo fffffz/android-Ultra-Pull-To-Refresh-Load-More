@@ -20,6 +20,7 @@ import com.sigma.ptr.PtrFrameLayout;
 public class MainActivity extends Activity {
 
     private PtrFrameLayout mPtrFrameLayout;
+    private Handler mHandler = new Handler();
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -51,7 +52,7 @@ public class MainActivity extends Activity {
         mPtrFrameLayout.setPtrHandler(new PtrDefaultHandler() {
             @Override
             public void onRefreshBegin(PtrFrameLayout frame) {
-                new Handler().postDelayed(new Runnable() {
+                mHandler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
                         mPtrFrameLayout.refreshComplete();
@@ -69,7 +70,7 @@ public class MainActivity extends Activity {
 
             @Override
             public void onLoadMoreBegin(PtrFrameLayout frame) {
-                new Handler().postDelayed(new Runnable() {
+                mHandler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
                         mPtrFrameLayout.loadMoreComplete();
@@ -80,6 +81,7 @@ public class MainActivity extends Activity {
 
             @Override
             public void onLoadMoreCancel(PtrFrameLayout frame) {
+                mHandler.removeCallbacksAndMessages(null);
                 Toast.makeText(frame.getContext(), "load more canceled", Toast.LENGTH_SHORT).show();
             }
         });
