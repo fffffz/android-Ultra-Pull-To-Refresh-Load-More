@@ -20,6 +20,9 @@
 
         <!-- keep header when refreshing-->
         <attr name="ptr_keep_header_when_refresh" format="boolean" />
+
+        <attr name="ptr_auto_load_more" format="boolean" />
+
     </declare-styleable>
 
     <declare-styleable name="PtrClassicHeader">

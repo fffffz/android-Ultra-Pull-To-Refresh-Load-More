@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:Ptr="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:gravity="center"
@@ -8,7 +9,8 @@
     <com.sigma.ptr.PtrClassicFrameLayout
         android:id="@+id/ptr"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        Ptr:ptr_auto_load_more="true">
 
         <android.support.v7.widget.RecyclerView
             android:id="@+id/rv"

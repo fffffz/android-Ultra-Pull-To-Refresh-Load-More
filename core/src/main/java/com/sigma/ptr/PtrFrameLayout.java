@@ -2,12 +2,16 @@ package com.sigma.ptr;
 
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.os.Build;
+import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
+import android.widget.ListView;
 import android.widget.Scroller;
 import android.widget.TextView;
 
@@ -41,6 +45,7 @@ public class PtrFrameLayout extends ViewGroup {
     private final static byte FLAG_ENABLE_NEXT_PTR_AT_ONCE = 0x01 << 2;
     private final static byte FLAG_PIN_CONTENT = 0x01 << 3;
     private final static byte MASK_AUTO_REFRESH = 0x03;
+    private final static byte MASK_AUTO_LOAD_MORE = 0x04;
     protected View mContent;
     // optional config for define header and content in xml file
     private int mHeaderId = 0;
@@ -63,7 +68,7 @@ public class PtrFrameLayout extends ViewGroup {
     private int mFooterHeight;
     private int mContentHeight = -1;
     private boolean mDisableWhenHorizontalMove = false;
-    private int mFlag = 0x00;
+    private int mFlag = MASK_AUTO_LOAD_MORE;
 
     // disable when detect moving horizontally
     private boolean mPreventForHorizontal = false;
@@ -121,6 +126,13 @@ public class PtrFrameLayout extends ViewGroup {
             mKeepHeaderWhenRefresh = arr.getBoolean(R.styleable.PtrFrameLayout_ptr_keep_header_when_refresh, mKeepHeaderWhenRefresh);
 
             mPullToRefresh = arr.getBoolean(R.styleable.PtrFrameLayout_ptr_pull_to_fresh, mPullToRefresh);
+
+            boolean isAutoLoadMore = arr.getBoolean(R.styleable.PtrFrameLayout_ptr_auto_load_more, true);
+            if (isAutoLoadMore) {
+                mFlag = mFlag | MASK_AUTO_LOAD_MORE;
+            } else {
+                mFlag = mFlag & ~MASK_AUTO_LOAD_MORE;
+            }
             arr.recycle();
         }
 
@@ -142,7 +154,6 @@ public class PtrFrameLayout extends ViewGroup {
             if (mContainerId != 0 && mContent == null) {
                 mContent = findViewById(mContainerId);
             }
-
             // not specify header or content
             if (mContent == null || mHeaderView == null) {
 
@@ -225,7 +236,60 @@ public class PtrFrameLayout extends ViewGroup {
         if (mFooterView != null) {
             mFooterView.bringToFront();
         }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            mContent.setOnScrollChangeListener(new OnScrollChangeListener() {
+                @Override
+                public void onScrollChange(View v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) {
+                    if (isAutoLoadMore() && !mContent.canScrollVertically(1)) {
+                        tryPerformLoadMore();
+                    }
+                }
+            });
+        } else if (mContent instanceof RecyclerView) {
+            ((RecyclerView) mContent).addOnScrollListener(new RecyclerView.OnScrollListener() {
+                @Override
+                public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                    if (isAutoLoadMore() && newState == RecyclerView.SCROLL_STATE_IDLE && !recyclerView.canScrollVertically(1)) {
+                        tryPerformLoadMore();
+                    }
+                }
+
+                @Override
+                public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                }
+            });
+        } else if (mContent instanceof ListView) {
+            ((ListView) mContent).setOnScrollListener(new AbsListView.OnScrollListener() {
+                @Override
+                public void onScrollStateChanged(AbsListView view, int scrollState) {
+                    if (scrollState == RecyclerView.SCROLL_STATE_IDLE && !view.canScrollVertically(1)) {
+                        tryPerformLoadMore();
+                    }
+                }
+
+                @Override
+                public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+
+                }
+            });
+        }
         super.onFinishInflate();
+    }
+
+    private void tryPerformLoadMore() {
+        if (mPtrStatus == PTR_STATUS_LOADING) {
+            return;
+        }
+        if (mLoadMoreStatus == LOAD_MORE_STATUS_LOADING) {
+            if (mFooterView.getBottom() <= mContentHeight) {
+                return;
+            }
+            int offsetY = mContentHeight - mFooterView.getBottom();
+            mContent.offsetTopAndBottom(offsetY);
+            mFooterView.offsetTopAndBottom(offsetY);
+            return;
+        }
+        performLoadMore();
     }
 
     @Override
@@ -393,7 +457,9 @@ public class PtrFrameLayout extends ViewGroup {
                 mPtrIndicator.onMove(e.getX(), e.getY());
                 float offsetX = mPtrIndicator.getOffsetX();
                 float offsetY = mPtrIndicator.getOffsetY();
-
+                if (Math.abs(offsetY) < 1) {
+                    return true;
+                }
                 if (mDisableWhenHorizontalMove && !mPreventForHorizontal && (Math.abs(offsetX) > mPagingTouchSlop && Math.abs(offsetX) > Math.abs(offsetY))) {
                     if (mPtrIndicator.isInStartPosition()) {
                         mPreventForHorizontal = true;
@@ -402,10 +468,8 @@ public class PtrFrameLayout extends ViewGroup {
                 if (mPreventForHorizontal) {
                     return dispatchTouchEventSupper(e);
                 }
-
                 boolean moveDown = offsetY > 0;
                 boolean moveUp = !moveDown;
-
                 if (moveDown) {
                     if (mLoadMoreStatus == LOAD_MORE_STATUS_LOADING && mFooterView.getTop() < mContentHeight) {
                         offsetY = Math.min(mContentHeight - mFooterView.getTop(), offsetY);
@@ -434,19 +498,15 @@ public class PtrFrameLayout extends ViewGroup {
                     }
                     performLoadMore();
                 }
-
                 boolean canMoveUp = mPtrIndicator.hasLeftStartPosition();
-
                 if (DEBUG) {
                     boolean canMoveDown = mPtrHandler != null && mPtrHandler.checkCanDoRefresh(this, mContent, mHeaderView);
                     PtrCLog.v(LOG_TAG, "ACTION_MOVE: offsetY:%s, currentPos: %s, moveUp: %s, canMoveUp: %s, moveDown: %s: canMoveDown: %s", offsetY, mPtrIndicator.getCurrentPosY(), moveUp, canMoveUp, moveDown, canMoveDown);
                 }
-
                 // disable move when header not reach top
                 if (moveDown && mPtrHandler != null && !mPtrHandler.checkCanDoRefresh(this, mContent, mHeaderView)) {
                     return dispatchTouchEventSupper(e);
                 }
-
                 if ((moveUp && canMoveUp) || moveDown) {
                     movePos(offsetY);
                     return true;
@@ -868,6 +928,7 @@ public class PtrFrameLayout extends ViewGroup {
     private void clearFlag() {
         // remove auto fresh flag
         mFlag = mFlag & ~MASK_AUTO_REFRESH;
+        mFlag = mFlag & ~MASK_AUTO_LOAD_MORE;
     }
 
     public void autoRefresh(boolean atOnce, int duration) {
@@ -894,6 +955,10 @@ public class PtrFrameLayout extends ViewGroup {
 
     public boolean isAutoRefresh() {
         return (mFlag & MASK_AUTO_REFRESH) > 0;
+    }
+
+    public boolean isAutoLoadMore() {
+        return (mFlag & MASK_AUTO_LOAD_MORE) > 0;
     }
 
     private boolean performAutoRefreshButLater() {
