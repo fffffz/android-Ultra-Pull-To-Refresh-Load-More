@@ -7,7 +7,6 @@
     android:orientation="vertical">
 
     <ProgressBar
-        android:id="@+id/lm_classic_footer_rotate_view_progressbar"
         style="@android:style/Widget.ProgressBar.Small"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

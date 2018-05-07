@@ -26,7 +26,7 @@ public class LoadMoreClassicDefaultFooter extends FrameLayout implements LoadMor
     }
 
     protected void initViews() {
-        LayoutInflater.from(getContext()).inflate(R.layout.load_more_classic_default_footer, this);
+        LayoutInflater.from(getContext()).inflate(R.layout.ptr_load_more_classic_default_footer, this);
     }
 
     @Override

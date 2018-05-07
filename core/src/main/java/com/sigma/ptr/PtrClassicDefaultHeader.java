@@ -144,9 +144,9 @@ public class PtrClassicDefaultHeader extends FrameLayout implements PtrUIHandler
         mRotateView.setVisibility(VISIBLE);
         mTitleTextView.setVisibility(VISIBLE);
         if (frame.isPullToRefresh()) {
-            mTitleTextView.setText(getResources().getString(R.string.cube_ptr_pull_down_to_refresh));
+            mTitleTextView.setText(getResources().getString(R.string.ptr_pull_down_to_refresh));
         } else {
-            mTitleTextView.setText(getResources().getString(R.string.cube_ptr_pull_down));
+            mTitleTextView.setText(getResources().getString(R.string.ptr_pull_down));
         }
     }
 
@@ -156,7 +156,7 @@ public class PtrClassicDefaultHeader extends FrameLayout implements PtrUIHandler
         hideRotateView();
         mProgressBar.setVisibility(VISIBLE);
         mTitleTextView.setVisibility(VISIBLE);
-        mTitleTextView.setText(R.string.cube_ptr_refreshing);
+        mTitleTextView.setText(R.string.ptr_refreshing);
 
         tryUpdateLastUpdateTime();
         mLastUpdateTimeUpdater.stop();
@@ -169,7 +169,7 @@ public class PtrClassicDefaultHeader extends FrameLayout implements PtrUIHandler
         mProgressBar.setVisibility(INVISIBLE);
 
         mTitleTextView.setVisibility(VISIBLE);
-        mTitleTextView.setText(getResources().getString(R.string.cube_ptr_refresh_complete));
+        mTitleTextView.setText(getResources().getString(R.string.ptr_refresh_complete));
 
         // update last update time
         SharedPreferences sharedPreferences = getContext().getSharedPreferences(KEY_SharedPreferences, 0);
@@ -210,10 +210,10 @@ public class PtrClassicDefaultHeader extends FrameLayout implements PtrUIHandler
             return null;
         }
         StringBuilder sb = new StringBuilder();
-        sb.append(getContext().getString(R.string.cube_ptr_last_update));
+        sb.append(getContext().getString(R.string.ptr_last_update));
 
         if (seconds < 60) {
-            sb.append(seconds + getContext().getString(R.string.cube_ptr_seconds_ago));
+            sb.append(seconds + getContext().getString(R.string.ptr_seconds_ago));
         } else {
             int minutes = (seconds / 60);
             if (minutes > 60) {
@@ -222,11 +222,11 @@ public class PtrClassicDefaultHeader extends FrameLayout implements PtrUIHandler
                     Date date = new Date(mLastUpdateTime);
                     sb.append(sDataFormat.format(date));
                 } else {
-                    sb.append(hours + getContext().getString(R.string.cube_ptr_hours_ago));
+                    sb.append(hours + getContext().getString(R.string.ptr_hours_ago));
                 }
 
             } else {
-                sb.append(minutes + getContext().getString(R.string.cube_ptr_minutes_ago));
+                sb.append(minutes + getContext().getString(R.string.ptr_minutes_ago));
             }
         }
         return sb.toString();
@@ -261,16 +261,16 @@ public class PtrClassicDefaultHeader extends FrameLayout implements PtrUIHandler
     private void crossRotateLineFromTopUnderTouch(PtrFrameLayout frame) {
         if (!frame.isPullToRefresh()) {
             mTitleTextView.setVisibility(VISIBLE);
-            mTitleTextView.setText(R.string.cube_ptr_release_to_refresh);
+            mTitleTextView.setText(R.string.ptr_release_to_refresh);
         }
     }
 
     private void crossRotateLineFromBottomUnderTouch(PtrFrameLayout frame) {
         mTitleTextView.setVisibility(VISIBLE);
         if (frame.isPullToRefresh()) {
-            mTitleTextView.setText(getResources().getString(R.string.cube_ptr_pull_down_to_refresh));
+            mTitleTextView.setText(getResources().getString(R.string.ptr_pull_down_to_refresh));
         } else {
-            mTitleTextView.setText(getResources().getString(R.string.cube_ptr_pull_down));
+            mTitleTextView.setText(getResources().getString(R.string.ptr_pull_down));
         }
     }
 
